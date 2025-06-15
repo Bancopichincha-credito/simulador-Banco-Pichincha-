@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Simulador Banco Pichincha</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #f7f3e9; /* jaune clair */
+    color: #222;
+    margin: 0;
+    padding: 0;
+  }
+  header {
+    background: #ffd400; /* jaune Banco Pichincha */
+    padding: 20px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.8em;
+    color: #000;
+  }
+  main {
+    max-width: 420px;
+    margin: 30px auto;
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.1);
+  }
+  label {
+    display: block;
+    margin-top: 15px;
+    font-weight: 600;
+  }
+  input, select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+  }
+  button {
+    margin-top: 25px;
+    background: #ffd400;
+    border: none;
+    padding: 14px;
+    width: 100%;
+    font-size: 1.2em;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  button:hover {
+    background: #e6c800;
+  }
+  .hidden {
+    display: none;
+  }
+  .transaction-info {
+    background: #fff7d9;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+    font-size: 1.1em;
+    line-height: 1.4em;
+    color: #222;
+  }
+  .progress-container {
+    background: #ddd;
+    border-radius: 20px;
+    height: 25px;
+    margin-top: 30px;
+    overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%;
+    background: #ffd400;
+    width: 0;
+    transition: width 0.5s ease;
+  }
+  .final-page {
+    text-align: center;
+    margin-top: 40px;
+  }
+  .final-page button {
+    background: #000;
+    color: #ffd400;
+  }
+</style>
+</head>
+<body>
+
+<header>Banco Pichincha - Simulador de Transacciones</header>
+
+<main>
+  <section id="step1">
+    <form id="simuladorForm">
+      <label for="nombre">Nombre completo</label>
+      <input type="text" id="nombre" name="nombre" required placeholder="Ej. Juan Pérez" />
+
+      <label for="pais">País</label>
+      <select id="pais" name="pais" required>
+        <option value="" disabled selected>Selecciona tu país</option>
+        <option value="México">México</option>
+        <option value="Estados Unidos">Estados Unidos</option>
+        <option value="España">España</option>
+        <option value="Colombia">Colombia</option>
+        <option value="Ecuador">Ecuador</option>
+      </select>
+
+      <label for="numero">Número de cuenta o tarjeta</label>
+      <input type="text" id="numero" name="numero" required placeholder="Ej. 1234 5678 9012 3456" />
+
+      <label for="moneda">Moneda</label>
+      <select id="moneda" name="moneda" required>
+        <option value="" disabled selected>Selecciona la moneda</option>
+        <option value="USD">USD</option>
+        <option value="EUR">EUR</option>
+        <option value="MXN">MXN</option>
+      </select>
+
+      <label for="monto">Monto a transferir</label>
+      <input type="number" id="monto" name="monto" required min="1" placeholder="Ej. 1000" />
+
+      <button type="submit">Simular Transacción</button>
+    </form>
+  </section>
+
+  <section id="step2" class="hidden">
+    <div class="transaction-info" id="infoTransaccion"></div>
+    <div class="progress-container">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <button id="btnCancelar" style="margin-top:15px; background:#aaa; color:#444;">Cancelar</button>
+  </section>
+
+  <section id="step3" class="hidden final-page">
+    <h2>¡Transacción detenida en 97%!</h2>
+    <p>Para activar su transacción, debe pagar una tarifa de activación del 10% del monto.</p>
+    <p id="montoTarifa" style="font-weight:bold; font-size:1.2em;"></p>
+    <button id="btnPagoWhatsApp">Pagar vía WhatsApp</button>
+  </section>
+</main>
+
+<script>
+  const form = document.getElementById('simuladorForm');
+  const step1 = document.getElementById('step1');
+  const step2 = document.getElementById('step2');
+  const step3 = document.getElementById('step3');
+  const infoTransaccion = document.getElementById('infoTransaccion');
+  const progressBar = document.getElementById('progressBar');
+  const btnCancelar = document.getElementById('btnCancelar');
+  const btnPagoWhatsApp = document.getElementById('btnPagoWhatsApp');
+  const montoTarifaEl = document.getElementById('montoTarifa');
+
+  const whatsappNumber = '+22950001045';
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const nombre = form.nombre.value.trim();
+    const pais = form.pais.value;
+    const numero = form.numero.value.trim();
+    const moneda = form.moneda.value;
+    const monto = Number(form.monto.value);
+
+    if (!nombre || !pais || !numero || !moneda || !monto || monto < 1) {
+      alert('Por favor, complete todos los campos correctamente.');
+      return;
+    }
+
+    // Calcula tarifa 10%
+    const tarifa = Math.round(monto * 0.10);
+
+    // Affiche les infos  
+    infoTransaccion.innerHTML = `
+      <p><strong>Nombre:</strong> ${nombre}</p>
+      <p><strong>País:</strong> ${pais}</p>
+      <p><strong>Número de cuenta o tarjeta:</strong> ${numero}</p>
+      <p><strong>Moneda:</strong> ${moneda}</p>
+      <p><strong>Monto a transferir:</strong> ${monto.toLocaleString()} ${moneda}</p>
+    `;
+
+    montoTarifaEl.textContent = `${tarifa.toLocaleString()} ${moneda}`;
+
+    // Affiche l'étape 2
+    step1.classList.add('hidden');
+    step3.classList.add('hidden');
+    step2.classList.remove('hidden');
+
+    // Lance la barre de progression à 97%
+    let progress = 0;
+    progressBar.style.width = '0%';
+
+    const interval = setInterval(() => {
+      if (progress >= 97) {
+        clearInterval(interval);
+        step2.classList.add('hidden');
+        step3.classList.remove('hidden');
+      } else {
+        progress++;
+        progressBar.style.width = progress + '%';
+      }
+    }, 60);
+
+    // Cancel button revient à étape 1
+    btnCancelar.onclick = () => {
+      clearInterval(interval);
+      step2.classList.add('hidden');
+      step3.classList.add('hidden');
+      step1.classList.remove('hidden');
+      progressBar.style.width = '0%';
+    };
+  });
+
+  btnPagoWhatsApp.addEventListener('click', () => {
+    const url = `https://wa.me/${whatsappNumber}?text=Hola,%20quiero%20pagar%20la%20tarifa%20de%20activaci%C3%B3n%20de%20mi%20transacci%C3%B3n.`;
+    window.open(url, '_blank');
+  });
+</script>
+
+</body>
+</html>
